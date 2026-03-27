@@ -22,7 +22,7 @@ export default function App() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkin, setCheckin] = useState(false);
+  const [checkin, setCheckin] = useState(true);
 
   const handleScan = async (results: any) => {
     if (results.length === 0 || loading) return;
