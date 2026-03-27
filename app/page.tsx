@@ -39,6 +39,7 @@ export default function App() {
         .from("profile")
         .update({ checked_in: true })
         .eq("id", results[0].rawValue)
+        .eq("checked_in", false)
         .select("first_name, last_name");
 
       setLoading(false);
@@ -49,7 +50,9 @@ export default function App() {
       }
 
       if (!data || data.length === 0) {
-        setError(`No profile found for ID: ${id}`);
+        setError(
+          `No profile found for ID or User has already checked in: ${id}`,
+        );
         console.error(id);
         return;
       }
@@ -63,6 +66,7 @@ export default function App() {
         .update({ has_eaten: true })
         .eq("id", results[0].rawValue)
         .eq("checked_in", true)
+        .eq("has_eaten", false)
         .select("first_name, last_name");
 
       setLoading(false);
