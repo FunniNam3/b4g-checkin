@@ -34,57 +34,67 @@ export default function App() {
     setPaused(true);
     setLoading(true);
 
+    // Fetch the profile first so we can give specific errors
+    const { data: profile, error: fetchError } = await supabase
+      .from("profile")
+      .select("first_name, last_name, checked_in, has_eaten")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !profile) {
+      setError(`No profile found for ID: ${id}`);
+      setLoading(false);
+      return;
+    }
+
+    const name = `${profile.first_name} ${profile.last_name}`;
+
     if (checkin) {
-      const { data, error } = await supabase
+      if (profile.checked_in) {
+        setError(`${name} has already checked in.`);
+        setLoading(false);
+        return;
+      }
+
+      const { error: updateError } = await supabase
         .from("profile")
         .update({ checked_in: true })
-        .eq("id", results[0].rawValue)
-        .eq("checked_in", false)
-        .select("first_name, last_name");
+        .eq("id", id);
 
       setLoading(false);
 
-      if (error) {
-        setError(error.message);
+      if (updateError) {
+        setError(updateError.message);
         return;
       }
 
-      if (!data || data.length === 0) {
-        setError(
-          `No profile found for ID or User has already checked in: ${id}`,
-        );
-        console.error(id);
-        return;
-      }
-
-      setSuccess(
-        `Successfully checked in ${data[0].first_name} ${data[0].last_name}`,
-      );
+      setSuccess(`Successfully checked in ${name}`);
     } else {
-      const { data, error } = await supabase
+      if (!profile.checked_in) {
+        setError(`${name} has not checked in yet.`);
+        setLoading(false);
+        return;
+      }
+
+      if (profile.has_eaten) {
+        setError(`${name} has already eaten.`);
+        setLoading(false);
+        return;
+      }
+
+      const { error: updateError } = await supabase
         .from("profile")
         .update({ has_eaten: true })
-        .eq("id", results[0].rawValue)
-        .eq("checked_in", true)
-        .eq("has_eaten", false)
-        .select("first_name, last_name");
+        .eq("id", id);
 
       setLoading(false);
 
-      if (error) {
-        setError(error.message);
+      if (updateError) {
+        setError(updateError.message);
         return;
       }
 
-      if (!data || data.length === 0) {
-        setError(`No profile found for ID or User has already eaten: ${id}`);
-        console.error(id);
-        return;
-      }
-
-      setSuccess(
-        `Successfully eaten ${data[0].first_name} ${data[0].last_name}`,
-      );
+      setSuccess(`Successfully marked ${name} as eaten`);
     }
   };
 
@@ -129,9 +139,7 @@ export default function App() {
       </div>
 
       {loading && (
-        <p className="text-center text-gray-500 animate-pulse">
-          Checking in...
-        </p>
+        <p className="text-center text-gray-500 animate-pulse">Loading...</p>
       )}
 
       {success && (
@@ -154,8 +162,6 @@ export default function App() {
           Scan Again
         </button>
       )}
-
-      <h1>{paused ? "Paused" : "Unpaused"}</h1>
     </div>
   );
 }
