@@ -42,8 +42,10 @@ export default function App() {
 
       if (rpcError) {
         setError(rpcError.message);
-      } else if (data) {
-        setSuccess(data.toString());
+      } else if (data?.error) {
+        setError(data.error);
+      } else if (data?.success) {
+        setSuccess(data.success);
       }
     } catch (err: any) {
       setError(err?.message ?? "An unknown error occurred");
