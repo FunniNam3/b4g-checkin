@@ -34,67 +34,21 @@ export default function App() {
     setPaused(true);
     setLoading(true);
 
-    // Fetch the profile first so we can give specific errors
-    const { data: profile, error: fetchError } = await supabase
-      .from("profile")
-      .select("first_name, last_name, checked_in, has_eaten")
-      .eq("id", id)
-      .single();
+    try {
+      const { data, error: rpcError } = await supabase.rpc(
+        checkin ? "admin_check_in_user" : "admin_mark_eaten",
+        { target_id: id },
+      );
 
-    if (fetchError || !profile) {
-      setError(`No profile found for ID: ${id}`);
+      if (rpcError) {
+        setError(rpcError.message);
+      } else if (data) {
+        setSuccess(data.toString());
+      }
+    } catch (err: any) {
+      setError(err?.message ?? "An unknown error occurred");
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    const name = `${profile.first_name} ${profile.last_name}`;
-
-    if (checkin) {
-      if (profile.checked_in) {
-        setError(`${name} has already checked in.`);
-        setLoading(false);
-        return;
-      }
-
-      const { error: updateError } = await supabase
-        .from("profile")
-        .update({ checked_in: true })
-        .eq("id", id);
-
-      setLoading(false);
-
-      if (updateError) {
-        setError(updateError.message);
-        return;
-      }
-
-      setSuccess(`Successfully checked in ${name}`);
-    } else {
-      if (!profile.checked_in) {
-        setError(`${name} has not checked in yet.`);
-        setLoading(false);
-        return;
-      }
-
-      if (profile.has_eaten) {
-        setError(`${name} has already eaten.`);
-        setLoading(false);
-        return;
-      }
-
-      const { error: updateError } = await supabase
-        .from("profile")
-        .update({ has_eaten: true })
-        .eq("id", id);
-
-      setLoading(false);
-
-      if (updateError) {
-        setError(updateError.message);
-        return;
-      }
-
-      setSuccess(`Successfully marked ${name} as eaten`);
     }
   };
 
@@ -104,6 +58,53 @@ export default function App() {
     setSuccess("");
     setError("");
   };
+
+  const [authed, setAuthed] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pwError, setPwError] = useState(false);
+
+  if (!authed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="flex flex-col gap-4 w-full max-w-sm">
+          <h1 className="text-2xl font-semibold text-center">Scanner Login</h1>
+          <input
+            type="password"
+            placeholder="Enter password"
+            value={pw}
+            onChange={(e) => setPw(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (pw === process.env.NEXT_PUBLIC_SCANNER_PASSWORD) {
+                  setAuthed(true);
+                } else {
+                  setPwError(true);
+                }
+              }
+            }}
+            className="border rounded-xl px-4 py-3 outline-none"
+          />
+          {pwError && (
+            <p className="text-red-500 text-sm text-center">
+              Incorrect password
+            </p>
+          )}
+          <button
+            onClick={() => {
+              if (pw === process.env.NEXT_PUBLIC_SCANNER_PASSWORD) {
+                setAuthed(true);
+              } else {
+                setPwError(true);
+              }
+            }}
+            className="bg-blue-600 text-white rounded-xl py-3 font-semibold"
+          >
+            Enter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-12 flex flex-col gap-6">

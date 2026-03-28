@@ -78,6 +78,7 @@ export type Database = {
           heard_about: string | null
           helpful_links: string | null
           id: string
+          is_admin: boolean
           last_name: string
           participating: boolean
           shirt_size: string | null
@@ -94,6 +95,7 @@ export type Database = {
           heard_about?: string | null
           helpful_links?: string | null
           id: string
+          is_admin?: boolean
           last_name: string
           participating?: boolean
           shirt_size?: string | null
@@ -110,6 +112,7 @@ export type Database = {
           heard_about?: string | null
           helpful_links?: string | null
           id?: string
+          is_admin?: boolean
           last_name?: string
           participating?: boolean
           shirt_size?: string | null
@@ -121,13 +124,6 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "team"
-            referencedColumns: ["team_id"]
-          },
-          {
-            foreignKeyName: "profile_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "team_summary"
             referencedColumns: ["team_id"]
           },
         ]
@@ -155,26 +151,82 @@ export type Database = {
       }
     }
     Views: {
-      team_summary: {
-        Row: {
-          leader_first_name: string | null
-          leader_last_name: string | null
-          max_members: number | null
-          member_count: number | null
-          team_id: string | null
-          team_leader: string | null
-          team_name: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      admin_check_in_user: { Args: { target_id: string }; Returns: Json }
+      admin_mark_eaten: { Args: { target_id: string }; Returns: Json }
+      create_team: {
+        Args: { p_max_members: number; p_team_name: string }
+        Returns: undefined
+      }
+      get_my_checked_in: { Args: never; Returns: boolean }
+      get_my_has_eaten: { Args: never; Returns: boolean }
+      get_my_team_id: { Args: never; Returns: string }
+      get_my_team_members: {
+        Args: never
+        Returns: {
+          first_hackathon: boolean
+          first_name: string
+          grad_year: number
+          id: string
+          last_name: string
+          team_id: string
+        }[]
+      }
+      get_my_team_summary: {
+        Args: never
+        Returns: {
+          leader_first_name: string
+          leader_last_name: string
+          max_members: number
+          member_count: number
+          team_id: string
+          team_leader: string
+          team_name: string
+        }[]
+      }
       get_team_emails: {
         Args: { p_team_id: string }
         Returns: {
           email: string
           id: string
         }[]
+      }
+      join_team: { Args: { p_team_id: string }; Returns: undefined }
+      kick_team_member: { Args: { target_id: string }; Returns: undefined }
+      leave_team: { Args: never; Returns: undefined }
+      search_teams: {
+        Args: { search_term: string }
+        Returns: {
+          leader_first_name: string
+          leader_last_name: string
+          max_members: number
+          member_count: number
+          team_id: string
+          team_leader: string
+          team_name: string
+        }[]
+      }
+      toggle_participation: { Args: never; Returns: undefined }
+      transfer_team_leadership: {
+        Args: { target_id: string }
+        Returns: undefined
+      }
+      update_my_profile: {
+        Args: {
+          p_diet_restrictions?: Json
+          p_first_hackathon?: boolean
+          p_first_name?: string
+          p_grad_year?: number
+          p_last_name?: string
+          p_shirt_size?: string
+        }
+        Returns: undefined
+      }
+      update_my_team: {
+        Args: { p_max_members: number; p_team_name: string }
+        Returns: undefined
       }
     }
     Enums: {
