@@ -40,12 +40,14 @@ export default function App() {
         { target_id: id },
       );
 
+      const result = data as { error?: string; success?: string } | null;
+
       if (rpcError) {
         setError(rpcError.message);
-      } else if (data?.error) {
-        setError(data.error);
-      } else if (data?.success) {
-        setSuccess(data.success);
+      } else if (result?.error) {
+        setError(result.error);
+      } else if (result?.success) {
+        setSuccess(result.success);
       }
     } catch (err: any) {
       setError(err?.message ?? "An unknown error occurred");
